@@ -1,0 +1,46 @@
+#!/bin/bash
+
+HOME=/home/opencv
+
+function log_info() {
+  echo
+  echo $1
+  echo
+}
+
+function clean_samples() {
+  cd $HOME
+  rm -rf java-sample/build
+  rm -rf java-sample/java.log
+  rm -rf clojure-sample/target
+  rm -rf clojure-sample/clojure.log
+}
+
+function validate_test_log() {
+  if ! grep -q "$1" $2; then exit 1; fi
+}
+
+function run_test() {
+  log_info "Running $1 health check."
+
+  cd $HOME/$1-sample
+
+  if [ $1 == 'java' ]; then
+    ant -DopencvJarPath=$OPENCV_JAVA_BINARY_PATH \
+        -DopencvLibraryPath=$OPENCV_JAVA_LIBRARY_PATH rebuild-run | tee java.log
+
+    validate_test_log 'BUILD SUCCESSFUL' 'java.log'
+  fi
+
+  if [ $1 == 'clojure' ]; then
+    lein test | tee clojure.log
+    validate_test_log '0 failures, 0 errors.' 'clojure.log'
+  fi
+}
+
+(run_test java)
+(run_test clojure)
+
+(clean_samples)
+
+log_info "Health check successful!"
