@@ -1,0 +1,19 @@
+on:
+  push
+
+name: ci
+
+jobs:
+  build:
+    name: Build OpenCV Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build the OpenCV image
+        run: docker build --progress=plain --no-cache -t opencv .
+
+      - name: Run the OpenCV image health check
+        run: docker run --rm -i opencv sh /home/opencv/health-check
+
