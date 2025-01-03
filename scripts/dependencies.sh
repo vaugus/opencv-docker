@@ -1,3 +1,5 @@
+#!/bin/bash
+
 REPO=/etc/apk/repositories
 
 echo '@edgemain http://nl.alpinelinux.org/alpine/edge/main' >> $REPO
@@ -5,7 +7,7 @@ echo '@edgecomm http://nl.alpinelinux.org/alpine/edge/community' >> $REPO
 echo '@edgetest http://nl.alpinelinux.org/alpine/edge/testing' >> $REPO
 
 apk update && \
-# apk upgrade && \
+apk upgrade && \
 apk --no-cache add \
     bash \
     build-base \
