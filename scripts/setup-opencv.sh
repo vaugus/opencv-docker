@@ -1,23 +1,22 @@
-OPENCV_TMP=/usr/local/opencv
+#!/bin/bash
 
-createBuildDirectories() {
-  mkdir -p $OPENCV_TMP && mkdir -p $OPENCV_TMP/build
+opencv_tmp_directory='/usr/local/opencv'
+
+download_opencv() {
+  local opencv_version="$1"
+
+  wget -q -O $opencv_tmp_directory/opencv.zip "https://github.com/opencv/opencv/archive/$opencv_version.zip"
+  unzip -q $opencv_tmp_directory/opencv.zip 
 }
 
-downloadOpenCV() {
-  OPENCV_VERSION=$1
-  wget -q -O $OPENCV_TMP/opencv.zip https://github.com/opencv/opencv/archive/$OPENCV_VERSION.zip
-  unzip -q $OPENCV_TMP/opencv.zip 
-}
+build_opencv() {
+  local opencv_version="$1"
 
-buildOpenCV() {
-  OPENCV_VERSION=4.6.0
+  mkdir -p $opencv_tmp_directory && mkdir -p $opencv_tmp_directory/build
+  cd $opencv_tmp_directory
 
-  createBuildDirectories
-  cd $OPENCV_TMP
-
-  downloadOpenCV $OPENCV_VERSION 
-  cd $OPENCV_TMP/build
+  download_opencv "$opencv_version" "$opencv_tmp_directory"
+  cd $opencv_tmp_directory/build
 
   cmake -DBUILD_TESTS=OFF \
         -DBUILD_opencv_java=ON \
@@ -30,34 +29,44 @@ buildOpenCV() {
   make install
 }
 
-setupClojureEnvironment() {
-  jarVersion="${OPENCV_VERSION//./""}"
+copy_opencv_binaries() {
+  local opencv_version="$1"
 
-  buildFolder=$OPENCV_TMP/build
-  native_folder=$buildFolder/native/linux/x86_64/
-
-  mkdir -p $buildFolder/clj-opencv && cd $buildFolder/clj-opencv
-  cp $buildFolder/bin/opencv-$jarVersion.jar .
-
-  mkdir -p ~/.lein
-  cd ~/.lein
-  echo "{:user {:plugins [[lein-localrepo \"0.5.2\"]]}}" > profiles.clj
-
-  cd $buildFolder/clj-opencv
-  lein localrepo install opencv-$jarVersion.jar opencv/opencv $OPENCV_VERSION
-}
-
-copyOpenCVBinaries() {
-  cd $OPENCV_TMP
+  cd $opencv_tmp_directory
   cp -r build/bin/ . && cp -r build/lib/ .
   rm -rf build
   mkdir build && cp -r ./bin build/ && cp -r ./lib build/
   rm -rf bin/ && rm -rf lib/
 
-  rm -rf opencv-$OPENCV_VERSION
+  rm -rf opencv-$opencv_version
   rm -f opencv.zip
 }
 
-buildOpenCV
-copyOpenCVBinaries
-setupClojureEnvironment
+setup_clojure_environment() {
+  local opencv_version="$1"
+
+  jar_version="${opencv_version//./""}"
+
+  opencv_build_folder=$opencv_tmp_directory/build
+  native_folder=$opencv_build_folder/native/linux/x86_64/
+
+  mkdir -p $opencv_build_folder/clj-opencv && cd $opencv_build_folder/clj-opencv
+  cp $opencv_build_folder/bin/opencv-$jar_version.jar .
+
+  mkdir -p ~/.lein
+  cd ~/.lein
+  echo "{:user {:plugins [[lein-localrepo \"0.5.2\"]]}}" > profiles.clj
+
+  cd $opencv_build_folder/clj-opencv
+  lein localrepo install opencv-$jar_version.jar opencv/opencv $opencv_version
+}
+
+main() {
+  local opencv_version="$1"
+
+  build_opencv "$opencv_version"
+  copy_opencv_binaries "$opencv_version"
+  setup_clojure_environment
+}
+
+main "$@"
