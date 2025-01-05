@@ -9,38 +9,30 @@ function log_info() {
 }
 
 function clean_samples() {
-  cd $HOME
-  rm -rf java-sample/build
-  rm -rf java-sample/java.log
-  rm -rf clojure-sample/target
-  rm -rf clojure-sample/clojure.log
+  cd $HOME/samples
+  rm -rf java/build
+  rm -rf java/java.log
 }
 
 function validate_test_log() {
   if ! grep -q "$1" $2; then exit 1; fi
 }
 
-function run_test() {
-  log_info "Running $1 health check."
+function run_java_test() {
+  log_info "Running java health check."
 
-  cd $HOME/$1-sample
+  cd $HOME/samples/java
 
-  if [ $1 == 'java' ]; then
-    ant -DopencvJarPath=$OPENCV_JAVA_BINARY_PATH \
-        -DopencvLibraryPath=$OPENCV_JAVA_LIBRARY_PATH rebuild-run | tee java.log
+  ant -DopencvJarPath=$OPENCV_JAVA_BINARY_PATH \
+      -DopencvLibraryPath=$OPENCV_JAVA_LIBRARY_PATH rebuild-run | tee java.log
 
-    validate_test_log 'BUILD SUCCESSFUL' 'java.log'
-  fi
-
-  if [ $1 == 'clojure' ]; then
-    lein test | tee clojure.log
-    validate_test_log '0 failures, 0 errors.' 'clojure.log'
-  fi
+  validate_test_log 'BUILD SUCCESSFUL' 'java.log'
 }
 
-(run_test java)
-(run_test clojure)
+main() {
+  run_java_test
+  clean_samples
+  log_info "Health check successful!"
+}
 
-(clean_samples)
-
-log_info "Health check successful!"
+main "$@"
