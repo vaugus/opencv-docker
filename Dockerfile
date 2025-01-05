@@ -7,13 +7,14 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk/
 ENV OPENCV_JAVA_BINARY_PATH=${OPENCV_PATH}/build/bin/
 ENV OPENCV_JAVA_LIBRARY_PATH=${OPENCV_PATH}/build/lib/
 
-COPY ./scripts/ $OPENCV_HOME
-COPY ./samples/ $OPENCV_HOME
+RUN addgroup -S opencv && adduser -S opencv -G opencv \
+    && mkdir -p $OPENCV_HOME/samples
 
-RUN addgroup -S opencv && adduser -S opencv -G opencv
+COPY ./scripts/ $OPENCV_HOME
+COPY ./samples/ $OPENCV_HOME/samples
+
 
 RUN cd $OPENCV_HOME && sh dependencies.sh \
-    && sh setup-lein.sh \
     && bash -c hash -r \
     && bash setup-opencv.sh ${OPENCV_VERSION} \
     && chown -R opencv $OPENCV_HOME \

@@ -42,31 +42,11 @@ copy_opencv_binaries() {
   rm -f opencv.zip
 }
 
-setup_clojure_environment() {
-  local opencv_version="$1"
-
-  jar_version="${opencv_version//./""}"
-
-  opencv_build_folder=$opencv_tmp_directory/build
-  native_folder=$opencv_build_folder/native/linux/x86_64/
-
-  mkdir -p $opencv_build_folder/clj-opencv && cd $opencv_build_folder/clj-opencv
-  cp $opencv_build_folder/bin/opencv-$jar_version.jar .
-
-  mkdir -p ~/.lein
-  cd ~/.lein
-  echo "{:user {:plugins [[lein-localrepo \"0.5.2\"]]}}" > profiles.clj
-
-  cd $opencv_build_folder/clj-opencv
-  lein localrepo install opencv-$jar_version.jar opencv/opencv $opencv_version
-}
-
 main() {
   local opencv_version="$1"
 
   build_opencv "$opencv_version"
   copy_opencv_binaries "$opencv_version"
-  setup_clojure_environment
 }
 
 main "$@"
