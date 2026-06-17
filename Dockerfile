@@ -1,25 +1,23 @@
-FROM alpine:3.15
+FROM ubuntu:noble
 
-ARG OPENCV_VERSION=4.6.0
-ARG OPENCV_HOME=/home/opencv
-ARG OPENCV_PATH=/usr/local/opencv
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk/
-ENV OPENCV_JAVA_BINARY_PATH=${OPENCV_PATH}/build/bin/
-ENV OPENCV_JAVA_LIBRARY_PATH=${OPENCV_PATH}/build/lib/
+# Install requirements
+RUN apt-get update && apt-get install -y \
+    build-essential cmake git \
+    libgtk2.0-dev pkg-config \
+    libavcodec-dev libavformat-dev libswscale-dev \
+    python3-dev python3-numpy \
+    libtbb-dev \
+    libjpeg-dev libpng-dev libtiff-dev \
+    libdc1394-dev \
+    libcanberra-gtk-module \
+    libcanberra-gtk3-module
 
-RUN addgroup -S opencv && adduser -S opencv -G opencv \
-    && mkdir -p $OPENCV_HOME/samples
+# Clone, build and install OpenCV
+RUN git clone https://github.com/opencv/opencv.git && \
+    cd /opencv && mkdir build && cd build && \
+    cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local .. && \
+    make -j"$(nproc)" && \
+    make install && \
+    rm -rf /opencv
 
-COPY ./scripts/ $OPENCV_HOME
-COPY ./samples/ $OPENCV_HOME/samples
-
-
-RUN cd $OPENCV_HOME && sh dependencies.sh \
-    && bash -c hash -r \
-    && bash setup-opencv.sh ${OPENCV_VERSION} \
-    && chown -R opencv $OPENCV_HOME \
-    && chmod +x $OPENCV_HOME/health-check
-
-USER opencv
-
-WORKDIR /work
+USER ubuntu
